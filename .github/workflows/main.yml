@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # Triggers the workflow only when a tag that follows the pattern vX.X.X is pushed
+      - 'v*.*.*'
 
 jobs:
   build:
