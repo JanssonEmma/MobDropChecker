@@ -1,18 +1,56 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 
-void processGroup(std::vector<std::string>& lines, size_t& index)
-{
+int getCount(const std::string& line) {
+    std::stringstream ss(line);
+    int idx, vnum, count;
+    ss >> idx >> vnum >> count;
+    return count;
+}
+
+void sortLinesAscending(std::vector<std::string>& lines) {
+    std::sort(lines.begin(), lines.end(), [](const std::string& a, const std::string& b) {
+        return getCount(a) < getCount(b);
+    });
+}
+
+void sortLinesDescending(std::vector<std::string>& lines) {
+    std::sort(lines.begin(), lines.end(), [](const std::string& a, const std::string& b) {
+        return getCount(a) > getCount(b);
+    });
+}
+
+void processGroup(std::vector<std::string>& lines, size_t& index) {
+    std::vector<std::string> groupLines;
     int expectedValue = 1;
 
+    // Collect group lines that start with a number
     while (index < lines.size()) {
         std::string& line = lines[index];
         if (line.find('}') != std::string::npos) {
             break;
         }
 
+        // Check if the line starts with a number
+        std::stringstream ss(line);
+        int number;
+        if (ss >> number) {
+            groupLines.push_back(line);
+        }
+
+        index++;
+    }
+
+    // Sort the group lines if necessary
+    //sortLinesAscending(groupLines);
+    //sortLinesDescending(groupLines);
+
+    // Apply corrected running values
+    for (auto& line : groupLines) {
         std::stringstream ss(line);
         std::string leadingWhitespace;
         int runningValue;
@@ -24,21 +62,21 @@ void processGroup(std::vector<std::string>& lines, size_t& index)
         }
 
         ss >> runningValue;
+        std::string restOfLine;
+        std::getline(ss, restOfLine); // Get the rest of the line after the first number
 
-        if (!ss.fail()) {
-            std::string restOfLine;
-            std::getline(ss, restOfLine); // Get the rest of the line after the first number
+        // Write the corrected line with the preserved leading whitespace
+        line = leadingWhitespace + std::to_string(expectedValue) + restOfLine;
+        expectedValue++;
+    }
 
-            // Write the corrected line with the preserved leading whitespace
-            lines[index] = leadingWhitespace + std::to_string(expectedValue) + restOfLine;
-            expectedValue++;
-        }
-        index++;
+    // Replace original lines with sorted and corrected lines
+    for (size_t i = 0; i < groupLines.size(); i++) {
+        lines[index - groupLines.size() + i] = groupLines[i];
     }
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "No file provided. Drag and drop a file onto this executable to process it." << std::endl;
         return 1;
